@@ -74,4 +74,61 @@ public class PianoMachineTest {
         assertEquals(pm.getInstrument(), Instrument.PIANO);
     }
 
+    @Test
+    public void shiftUpTest() {
+        int octave = PianoMachine.DEFAULT_OCTAVE;
+        int high = octave + Pitch.OCTAVE;
+        int vHigh = octave + Pitch.OCTAVE * 2;
+
+        pm.resetOctave();
+        assertEquals(pm.getOctave(), octave);
+
+        pm.shiftUp();
+        assertEquals(pm.getOctave(), high);
+
+        pm.shiftUp();
+        assertEquals(pm.getOctave(), vHigh);
+
+        pm.shiftUp();
+        assertEquals(pm.getOctave(), vHigh);
+    }
+
+    @Test
+    public void shiftDownTest() {
+        int octave = PianoMachine.DEFAULT_OCTAVE;
+        int low = octave - Pitch.OCTAVE;
+        int vLow = octave - Pitch.OCTAVE * 2;
+
+        pm.resetOctave();
+        assertEquals(pm.getOctave(), octave);
+
+        pm.shiftDown();
+        assertEquals(pm.getOctave(), low);
+
+        pm.shiftDown();
+        assertEquals(pm.getOctave(), vLow);
+
+        pm.shiftDown();
+        assertEquals(pm.getOctave(), vLow);
+    }
+
+    @Test
+    public void getOctave() {
+        pm.resetOctave();
+        assertEquals(pm.getOctave(), PianoMachine.DEFAULT_OCTAVE);
+    }
+
+    @Test public void resetOctaveTest() {
+        int octave = PianoMachine.DEFAULT_OCTAVE;
+        int high = octave + Pitch.OCTAVE;
+        
+        pm.resetOctave();
+        assertEquals(pm.getOctave(), octave);
+
+        pm.shiftUp();
+        assertEquals(pm.getOctave(), high);
+
+        pm.resetOctave();
+        assertEquals(pm.getOctave(), octave);
+    }
 }
