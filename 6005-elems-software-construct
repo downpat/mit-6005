@@ -1,0 +1,455 @@
+6.005 - Elements of Software Construction
+https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-005-elements-of-software-construction-fall-2011/
+
+Goals based on Exams
+	Regular Expressions and Grammars
+	State Machines and Testing
+	Abstract Data Types
+	Recursive Data Types
+	Learn the design patterns
+		Interpreter
+		Visitor
+	Learn concurrency
+		Deadlock
+		Synchronized keyword in java
+
+Take Notes on Lectures
+	*Static Checking
+	*State Machines
+	*Regular Expressions and Grammars
+	*Abstract Data Types
+	*Recursive Data Types
+	*Interpreters and Visitors
+	*Concurrency
+	*Thread Safety
+	Notes:
+		Static diagrams are useless
+		Examples used in class are often overy theoretical, arcane
+			What happened to using cars and animals for OOP?
+			The whole reason for examples is to make material approachable, less abstract
+			So what the hell good is an abstract example?
+		Ideas I tend to have during MIT lectures are theoretical
+			Can we apply message passing to multi-cored processors?
+			Ideas I had at RIT were practical
+				I could use this database class to build a CRM
+
+Problems Sets
+	*Midi Piano - state machines
+		problems 1-3
+	*Calculator Parser - regex and grammars
+		problems 1-2.5
+	Multiplayer Minesweeper - concurrency
+	Note: Problem sets encourage...
+			writing all method specs
+			and writing tests for those specs
+			and then writing the actual methods
+			This is bad practice. Instead...
+			You should write one method spec
+			and then one test
+			and then implement the method
+			and then check that it passes the test
+			So you have one good method at a time
+
+
+Lecture 1: Static Checking
+	Lecture compares Python and Java to illustrate the differences between a statically typed (Java) and a dynamically typed language
+	This course is mainly about catching bugs, and statically typed languages implement Static checking to catch many bugs
+		Ex. trying to multiply to strings in java: "hello" * "world"
+		The multiplication operation cannot be appled to strings, so an error is thrown at compile time and the bug is found without having to run the program
+	Java Arrays vs. Lists
+		Arrays are built using primitive values and have a specified length
+			int[] a = new int[100]
+		Lists can have arbitrary lengths and must be a class that implements the List interface
+			List<Integer> l = new ArrayList<Integer>();
+			Notice how the declared type on the left side is different from the actual class instantiation on the right
+	Methods
+		public methods are accessible from anywhere
+		private methods are meant to keep operations safely, often to protect immutability for immutable types
+		static methods can be run on a class and don't require instantiation of the class
+			e.g. Hailstone.hailstoneSequence(83)
+	Hacking vs. Engineering
+		Hackers
+			write lots of code before testing
+			try to keep all the details in their head
+			assume that bugs won't happen or will be easy to find and fix
+		Engineers
+			write a little code at a time, testing frequently
+			document the assumptions that code depends on
+			defend code against stupidity, static checking helps
+Lecture 4: State Machines
+	'final' reserved word in Java
+		Used for declaring constants on primitive types
+			Doesn't need to be compile time, i.e. you can call a function when the parent class is instantiated/accessed and the variable will be constant from then
+			Static vs. non-static
+				Static: final variables will be the same for every object and for referencing the class directly
+				Non-static: final variables will be different for different classes that instantiate them dynamically, e.g. with random numbers 
+		Used for declaring a reference to an object, but not the values in the object, is constant
+			i.e. The reference cannot be set to another object once the parent class is instantiated
+		Blank finals
+			Allows finals to be declared later at runtime and persist with the object
+			Must be set before they're accessed
+		Final arguments
+			Parameters passed to a method can be final
+			Doesn't allow the reference to argument to be changed
+				e.g. You couldn't take a final argument object and store a newly initialized object in it
+			Objects can be mutated
+			Primitives cannot be mutated
+		Final methods
+			Keeps the method from being overridden by inheriting classes
+			Final methods can also be more efficient
+				The compiler can inline the method code, eliminating overhead for calling method
+				Only more efficient on small methods, because large chunks of code will dwarf the overhead savings
+			Private methods are implicitly final
+		Final Classes cannot be inherited from and tend to be more efficient
+	Mutable Objects
+		Strings are immutable
+		StringBuilder represents a string, and is mutable
+		Operations of an object that change the value of the object are mutator operations
+		When doing lots of operations on immutable types, lots of copies are created, so it's more efficient to use mutable objects
+			e.g. StringBuilder is better for string concatentation than string, because new strings will need to be created for each concatention
+		Iterators, used under the hood in for loops, are mutable objects
+			Calling the next() method returns the value the iterator is pointing at, and advances the pointer to the next item
+			Thus, next() is a mutator because it changes what the iterator is pointing at
+	Mutable Objects as State Machines
+		Similar to graphs
+		Nodes are 'states' that the system can be in
+		Edges are transitions between 'states' called 'events'
+		The state of a mutable object is determined by its instance variables
+		Mutators change the state of an object by changing their instance variables
+		Observers provide information about the state of the instance variables, like 'hasNext()' in an iterator
+	State Machines for Design
+		You can design a class and its instance variables by designing a state machine for it
+			observer methods do not change an object and cannot transition it to a new state
+			mutator methods do change the object and may transition it to a new state
+		You can also design a testing strategy using a state machine
+			Testing strategies attempt a certain amount of code coverage, that is, how many behaviors are covered by the tests
+			Four common types of coverage for state machines (from weakest to strongest)
+				all-actions - includes every event in at least some test
+				all-states - visits every state in at least some test
+				all-transitions - makes every legal transition in the state machine in some test
+				all-paths - explores every possible path of transitions through the state machine
+Lecture 5: Regular Expressions and Grammars
+	This lecture is useful if you're thinking of designing a programming language, a natural language processor, or any kind of parser
+	Java Reading: http://docs.oracle.com/javase/tutorial/essential/regex/index.html
+		java.util.regex provides the Pattern, Matcher and PatternSyntaxException classes
+			Pattern - a compiled regular expression, instantiated via static methods that take regular expressions as an argument
+			Matcher - interprets a pattern and performs match operations against an input string, instantiated by Pattern's 'matcher' method
+			PatternSyntaxException - rises when bad RE syntax is used to make a Pattern
+	Interpreting Markup languages
+		Take a stream of character and convert it to normal or italic text, depending on the characters
+		Reading the input
+			lexical analysis - aka lexing, transforms input characters into higher level symbols, like words or HTML tags. Symbols are called 'lexemes' or 'tokens'
+			parsing - interprets the tokens produced by lexical analysis. Parser is responsible for knowing relationships between tokens.
+			The two steps are designed as independent state machines
+				"Separation of Concerns" in software engineering parlance
+				Although the parser needs the lexer, the responsibilities of each are clear
+		Lexical Analysis
+			Building lexers that do lexing
+			Takes low-level characters and outputs higher level symbols (e.g. '<i>') called tokens or lexemes
+				Ex: These three characters '<', 'i', '>' become '<i>'
+				Process is called tokenization
+			Simplifies the parsing process by abstracting input details
+			Removes unnecessary characters, like whitespace
+			Combines symbols into classes, allowing parser to treat them as a group
+				e.g. a Java lexer will put user-defined names into a separate class
+				Tokens are not just strings, but may be objects with fields
+				Enums are useful when defining tokens
+			Python lexer
+				tokens for newlines and indentation
+			English lexer
+				detects parts of speech as different types of tokens
+				unpack morphology (e.g. "mice" becomes "plural(noun(mouse))" or "plural+mouse")
+		Lexer as a State Machine
+			Works like an Iterator
+			next() returns the next token in a sequence
+			hasNext() can say if we're at the end of the sequence
+			special tokens, e.g. END(), can also signal the end of a sequence
+		Grammars
+			a grammar designs a set of sentences
+			a sentence is a sequence of symbols (or tokens or terminals)
+
+			a grammar is a set of productions
+			each production defines a non-terminal
+			a non-terminal is a variable that defines a set of sentences
+			
+			non-terminals are capitalized and terminals are lower case
+			Production form
+				non-terminal ::= expression of terminals and non-terminals and operators			
+			Three operators
+				sequence: A ::= B C, an A is a B followed by a C
+				iteration: A ::= B*, an A is zero or more Bs
+				choice: A ::= B | C, an A is a B or a C
+				Other operators exist to make combinations of sequence, choice and iteration
+			Example:  
+				grammar 
+					URL ::= Protocol :// Address  
+					Address ::= Domain . TLD  
+					Protocol ::= http | ftp  
+					Domain ::= mit | apple | pbs  
+					TLD ::= com | edu | org 
+				terminals are 
+					://, ., http, ftp, mit, apple, pbs, com, edu, org  
+				non-terminals are 
+					TLD = { com, edu, org }  
+					Domain = { mit, apple, pbs }  
+					Protocol = { http, ftp }  
+					Address = { mit.com, mit.edu, mit.org, apple.com, apple.edu, apple.org, pbs.com, pbs.edu, 
+					pbs.org} 
+					URL = { http://mit.com, http://mit.edu, ..., ftp://mit.com, ..
+				pg 4,5 have more examples
+		Regular Grammars
+			Can be compile all non-terminals down to a single production for the root
+			This means all of the non-terminals can be "compiled" into a single expression to describe the entire grammar
+			Compiled regular grammars are called regular expressions
+			Markdown is a regular grammar
+			Grammars that can't be compiled this way are called "context-free"
+			HTML, LaTeX and Java are context-free grammars
+		Recursive Descent Parsing and Evaluation
+			Grammar guides the design of a parser
+			pgs 6-8 have example parser
+		Parser Generators
+			Used for complex, context-free grammars
+			Enter a grammar, get parser code
+			JavaCC is a parser generator for java
+		Using Regular Expressions
+			Used in programming languages and text editor searches for finding and/or replacing strings
+Lecture 6: Abstract Data Types
+	Abstract Data Types have the following qualities
+		Abstract - Omitting or hiding low-level details with a simpler, higher-level idea
+		Modularity - Dividing up a system of components into modules, each one can work independently of the rest of the system
+		Encapsulation - Building walls around the module so that the module is responsible for its own internal behavior, keeping its integrity even when there are bugs elsewhere
+		Information Hiding - Hiding details of a modules implementation from the rest of the system
+		Separation of Concerns - Making a feature the responsibility of a single module
+	Types are defined by their operations
+	Abstract types have the following operators
+		Creators - like constructors, creates a new object of the type, either from some other type or from nothing
+		Producers - Create new objects from other objects of the type. String.concat takes two strings and makes a new one
+		Mutators - Change objects of the type, like add() mutating a list by appending a new item, immutable types don't have them
+		Observers - Take objects of a type and returns objects of a different type that describe the object, like the length() method of a string
+	Designing an Abstract Type
+		Better to have a few, simple operations that can be combined than lots of complex operations - start thinking about multiple types if this happens
+		Each operation should have a well defined purpose
+			Bad: A sum() method on a list would work well with lists of integer, but what about lists with other types? Too hard to define
+			Good: An add() method on a list works well for any type of list, adding elements to the list regardless of the element
+		Operations should be adequate.
+			Can every property of the type be extracted easily?
+			Is getting certain information too complicated?
+		Don't mix generic abstractions with domain-specific abstractions
+			A Deck type that represents playing cards shouldn't accept arbitrary types, best to stick to card types or whatever represents cards
+			Similarly, don't add domain specific applications to generic types, like dealCards to a List
+	Preserving Invariants
+		Good abstract data types have limitations and take steps to enforce them
+		e.g. a string is immutable, cannot be changed, and so there are no operations to change it
+		'Representation exposure' occurs when a type's invariant varies because it was exposed in some unpredicted way
+		Invariants can be preserved by setting state variables to private and using defensive copying when mutating or observing those variables
+		You can use 'immutable wrappers' like Collection.unmodifiableList() to get an immutable type from a mutable type
+		You can prove a type has an invariant quality with 'Structural Induction':
+			If an invariant is:
+				1. Established by creators
+				2. Preserved by producers, mutators and observers
+				3. Has no representation exposures
+			Then the invariant is true for every instance of the data type
+	Rep Invariant and Abstract Function
+		What does your abstraction data type claim to do?
+		How does it achieve that?
+		The abstract values are the theory you're trying to implement
+		The representation values are the actual values you use to portray the abstract values
+			e.g. strings representing character sets
+				"" -> {}, empty string represent empty character set
+				"abc" -> {a, b, c}, string "abc" represents abc set
+				"bac" -> {a, b, c}, multiple ways to represent unordered character set with a string
+		It's OK if your representation values have more than one way to represent an abstract value
+		The representation doesn't work if there's an abstract value that no representation value can map to
+		So the relationship between representation values and abstract values is governed by two functions
+			The Abstract Function - AF: R -> A
+				A representation value is mapped to an abstract value that it represents
+				Describes what abstract values the representation values are representing
+			The Representation Invariant - RI: R -> boolean
+				Describes the set of legal represenation values
+				For R, R is true only if AF(R) is successful
+				This limits representations to only the values that can map to the abstraction
+				from the previous example, "abbc" would map to nothing, because there are only two abstract values
+				Thus, it is not a rep invariant because RI would be false
+Lecture 7: Recursive Data Types
+	Immutable Lists
+		Immutability promotes sharing
+			Sharing an immutable object has no threat of the object's integrity being disrupted
+			Sharing is more memory efficient, because copies need not be created
+		List processing operations
+			empty -> returns an empty list
+			cons -> given an element, returns a new list with that element at the front (immutable push)
+			first -> returns the first element of the list
+			rest -> returns a list without the first element (first + rest = immutable pop)
+		Implementing an immutable list in Java as a recursive data structure - pg2
+			Effectively defines an immutable list without using one specific data type
+				No primitive variables
+				No classes from the Java standard library
+			public interface ImList<E>
+				specifies three methods:
+					cons
+					first
+					rest
+			public class Empty<E> implements ImList<E>
+				specifies constructor and one method
+					Empty()
+					cons
+				first and rest are implemented, but throw unsupported errors
+			public class Cons<e> implements ImList<E>
+				two private variables:
+					private E e; //Keeps one of the variables in the list
+					private ImList<E> rest; //Recursive definition for remaining elements
+				specifies constructor
+					Cons(E e, ImList<E> rest)
+				specifies three methods
+					cons
+					first
+					rest
+		In a recursive data type, all the operations are handled
+		Null vs. Empty
+			While a recursive data type like the above could be defined w/ a null type instead of an empty, empty is better
+			There's no need for Null checking with an Empty type
+				Keeps code cleaner
+				Empty type has same operations as populated data structure
+		SAT Problems
+			Given a boolean equation, (P || Q) && !(P || R), find values for P,Q, and R that make it true
+			Solve by testing every possible value for P, Q, and R
+			SAT problems are always Θ(c^n) in the worst case
+			However, the worst case tends to be very unlikely, so it's useful for problem solving
+			SAT solver with recursive implementation on pgs 10,11
+			Conjunctive Normal Form (CNF) makes building SAT solvers easier
+			DPLL is even more efficient to implement
+Lecture 8: Interpreters and Visitors
+	Recipes for Program Construction
+		Recipe for a Method
+			Design a method by writing the spec comment and method signature
+			Write unit tests that cover the cases in the spec
+			Code the method. Add more test cases to the test as the code is implemented
+		Recipe for an Abstract Data Type (ADT)
+			Design the operations: creators, producers, observers and mutators
+				It's it's mutable, make a state machine diagram
+				If it needs to recognize linguistically structured arguments, write a grammer for the language
+				If it's recursive, write a data type expression, convert to classes and interfaces
+			Write signatures and specs for each operation
+			Write test cases that cover state transitions and method specs
+			Choose the rep and write rep invariant and abstract function
+			Implement methods, running test suite frequently
+			Make sure tests cover code
+		Recipe for a program
+			Choose data structures
+				What kind of data are you working with?
+				Do you need custom types, or will standard library structures work?
+			Divide into steps
+				The steps your data will take as the program functions
+				e.g. Lexing strings into tokens, parsing tokens from lexer
+			Module by Module
+				Implement each new data structure using the recipe for ADTs
+				Ensure proper specification and unit test coverage
+				Keep the modules modular
+			Put it together
+				Wire the modules together and write tests for their connection points
+				Continually run all unit tests after each connection is made
+				Expect things to fail and make only small changes at a time
+				Keep re-running tests after each change or bug fix
+	Design Patterns
+		Shorthand to describe the design of a module or program
+		e.g. Encapsulation, Exception, Iterator	(all builtin to Java and other languages)
+	Factory Pattern
+		Factory Method
+			A static method that creates a value of type
+			Helpful when creating an instance of an interface
+			Makes it easy to hide the existence of classes in ADTs (no need to call constructor directly)
+	Using instanceof and casting is usually bad design
+		In python, type() or checking that an object has a method or attribute would be the equivalent
+	Interpreter patterns are basically implementations of interfaces
+	The Visitor Pattern - pgs 9, 10
+		Useful when you need to perform an operation on instances that implement a "parent" interface, but the operation depends on the exact type of the instance
+		Create a separate "Visitor" interface
+		The Visitor interface defines methods that perform the operation on the specific "child" types, taking those types as parameters
+		Alter the parent interface to have a method that takes an instance of Visitor as a parameter
+		Have the child types implement the parent's new method
+			Calling Visitor's method that corresponds with a child type
+			Pass itself as the parameter to the visitor's method
+		Implment the Visitor interface into a class named after the operation that needs to be performed
+		A static function can then perform the operation
+			Function takes instance of parent interface as parameter
+			Function calls the parent interface's new function
+			Function passes a new instance of the operation class implementing Visitor
+		Completely eliminates the need for type checking before performing an operation on an instance where only an interface is known
+		It's helpful to nest the Visitor definition in the data type that needs it (the "parent" interface)
+		The operation methods in the visitor interface can all have the same name since they'll be taking different types as arguments
+		If you only need one operation, you can declare the Visitor implementation as an anonymous class (pg 11)
+		If the operation requires multiple parameters, pass them as parameters to the constructor of the Visitor implementation
+	Interpreter vs. Visitor
+		Interpreter defines all the operations in the variant class
+			Makes it easy to create a new variant, just make a new implementation of the intepreter interface
+			Makes it difficult to add new operations, because each variant class needs to override the interpreter interface
+		Visitor defines all the operations in the interface
+			Makes it easy to add a new operation, simply by making a new visitor implementation
+			Makes it difficult to add a new variant, since ever visitor implementation will need a new method for each new variant
+Lecture 10: Concurrency
+	Models for Concurrent Programming
+		Shared Memory
+			Two processes operating on the same memory (i.e. data)
+		Message Passing
+			Two processes talking to each other, sending data back and forth, operating simultaneously
+	Process vs. Thread
+		Process is modular, instance of a program unto itself, with its own memory
+			Shared memory between processes requires complexity
+			Best to interact with other processes via message passing
+		Thread is like its own processor
+			Messages between threads require complexity, by creating queues
+			Best to interact with other threads via shared memory
+	Time Slicing
+		With more threads than CPUs, threads share time on each CPU
+		Thread opreation order tends to be random and non-deterministic
+	Race Condition
+		The correctness of the program depends on what order thread operations are performed
+		Race conditions lead to broken programs, because the result is non-deterministic
+	Synchronization
+		To avoid race conditions, concurrent modules that share memory need to sync with each other
+		Locks are a common sync mechanism
+		Holding a lock means "I'm changing this, don't touch right now"
+		If thread A acquires a lock first, thread B must wait until lock is released
+		Locks communicate to the processor that operations are concurrent, so cache memory can be properly flushed
+	Deadlock
+		Threads are stuck waiting for each other to do something
+		A has locked X, but won't unlock until it can change Y, and B has locked Y, and won't unlock until it can change X
+	Message Passing
+		Send operations to be performed to a module, module applies them in order
+		Module sends message back to sender when operation is performed (like a receipt)
+		Not immune from race conditions
+			Bank withdrawals
+				Account has $100
+				Bob sends $50 withdrawal message
+				Alice sends $75 withdrawal message
+				Both messages are processed and the account is overdrawn
+				Account module should only run message operation if sufficient funds
+				In this case, Bob would get a proper receipt
+				But Alice would get an insufficient funds reply
+		They can also be deadlocked
+			Common example is when a queue size is finite, and the queue fills up faster than it can be processed
+	Concurrency is hard to test and debug
+		Poor coverage
+			Unit testing can require many many many cases to cover everything
+		Poor reproducibility
+			Non-deterministic nature of threading means race conditions may not always provide bad output
+		Logging makes it easier to test
+			Trace statements can lie because of non-deterministic nature of threads
+			But logs will keep the order of operations in a file
+			Log the output and re-run program until bug is found
+			Then analyze the logs and find the race condition that broke the program
+Lecture 12: Thread Safety
+	A data type is 'threadsafe' if it...
+		Behaves correctly while being accessed from multiple threads
+		Regardless of how threads are executed
+		Requires no additional coordination from the parent thread
+	Immutable data types are threadsafe if
+		It has no mutator methods
+		All fields are private and final
+		No mutation whatsoever of mutable objects in the rep, not even for beneficient mutation like caching
+		No rep exposure, e.g. return a mutable instance of a private class variable as a reference
+	Threadsafe Collections
+		Java has wrappers for threadsafe collections
+		Iterators on these collections are no threadsafe, so if the collection changes, the iterator will not change with it, which will break it
+Lecture 13: Synchronization
+	This lecture describes how to design a threadsafe data type
